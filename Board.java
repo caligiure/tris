@@ -51,10 +51,8 @@ public class Board {
     }
 
     public boolean makeMove(char mark, int x, int y) throws IllegalArgumentException {
-        if(x<0 || x>=n)
-            throw new IllegalArgumentException("Illegal x argument");
-        else if(y<0 ||y>=m)
-            throw new IllegalArgumentException("Illegal y argument");
+        if(x<0 || x>=n || y<0 ||y>=m)
+            throw new IllegalArgumentException("The selected box is out of bounds");
         else if(mark!='X' && mark!='O')
             throw new IllegalArgumentException("Illegal mark argument");
         else if(mat[x][y]=='O' || mat[x][y]=='X')

@@ -12,9 +12,11 @@ import tris.src.GameManager.Cmd;
 public class TrisClient {
     private final Socket s;
     public TrisClient() {
-        int serverPort = 8001; // su cui il server riceve le richieste di iniziare una partita
         try {
-            InetAddress serverAddress = InetAddress.getByName("localhost");
+            MulticastManager mm = new MulticastManager();
+            String[] serverAddressAndPort = mm.readAddressAndPort();
+            InetAddress serverAddress = InetAddress.getByName(serverAddressAndPort[0]);
+            int serverPort = Integer.parseInt(serverAddressAndPort[1]);
             s = new Socket(serverAddress, serverPort);
             System.out.println("Connected to server.");
             System.out.println("NOTE:\nEach box of the board is represented by the corresponding number.");

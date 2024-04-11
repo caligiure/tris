@@ -1,32 +1,67 @@
 package tris.src;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 
 public class TrisServer {
+    private final int serverPort = 8888;
     private final ServerSocket ss;
     private final LinkedList<Player> waitingPlayers;
     private int numPlayers;
     private final Semaphore mutexPlayers, readyPlayers;
 
     public TrisServer() {
-        int serverPort = 8001;
         try {
             ss = new ServerSocket(serverPort);
             waitingPlayers = new LinkedList<>();
             numPlayers=0;
             mutexPlayers = new Semaphore(1);
             readyPlayers = new Semaphore(0);
-            ClientAccepter ca = new ClientAccepter();
-            ca.start();
-            GameStarter gs =new GameStarter();
-            gs.start();
+            new ClientAccepter().start();
+            new GameStarter().start();
+            new MulticastSender().start();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    class MulticastSender extends Thread {
+        private final MulticastSocket mSocket;
+        InetAddress multicastAddress;
+        DatagramPacket dp;
+
+        public MulticastSender() {
+            String strBuf = "" + serverPort;
+            byte[] buf = strBuf.getBytes();
+            try {
+                multicastAddress = InetAddress.getByName("230.0.0.1");
+                mSocket = new MulticastSocket();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            // the datagram packet must be sent to address 230.0.0.1 on port 2000
+            dp = new DatagramPacket(buf, buf.length, multicastAddress, 2000);
+        }
+
+        public void run() {
+            //noinspection InfiniteLoopStatement
+            while (true) {
+                // Sends a multicast datagram containing the server socket port
+                sendMulticastDatagram();
+            }
+        }
+
+        void sendMulticastDatagram() {
+            try {
+                mSocket.send(dp);
+                Thread.sleep(20000);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
     class ClientAccepter extends Thread {
@@ -72,7 +107,7 @@ public class TrisServer {
                 }
             } // while
         } // run
-    } // class
+    }
 
     public static void main(String[] args) {
         new TrisServer();

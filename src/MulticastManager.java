@@ -38,7 +38,7 @@ public class MulticastManager {
                 try {
                     mSocket.send(dp);
                     //noinspection BusyWait
-                    Thread.sleep(20000);
+                    Thread.sleep(10000);
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }

@@ -1,4 +1,4 @@
-package tris;
+package tris.src;
 
 public class Board {
     private final int n;

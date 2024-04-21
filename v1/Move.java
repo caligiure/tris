@@ -1,4 +1,4 @@
-package tris.src;
+package tris.v1;
 
 import java.io.Serializable;
 

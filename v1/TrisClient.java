@@ -1,4 +1,4 @@
-package tris.src;
+package tris.v1;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
-import tris.src.GameManager.Cmd;
+import tris.v1.GameManager.Cmd;
 
 public class TrisClient {
     private final Socket s;

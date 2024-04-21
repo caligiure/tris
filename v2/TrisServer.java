@@ -9,6 +9,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrisServer {
+    private final int SERVER_PORT = 8888;
     boolean running = true;
     List<Player> players = Collections.synchronizedList(new LinkedList<Player>());
     AtomicInteger playersCounter = new AtomicInteger(0);
@@ -23,24 +24,20 @@ public class TrisServer {
     }
 
     public TrisServer() {
-        try {
 
-            mutexPlayers = new Semaphore(1);
-            readyPlayers = new Semaphore(0);
-            new ClientAccepter().start();
-            new GameStarter().start();
-            new MulticastManager().sendPort(serverPort);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        mutexPlayers = new Semaphore(1);
+        readyPlayers = new Semaphore(0);
+
+        new ClientAccepter().start();
+        new GameStarter().start();
+        new MulticastManager().sendPort(SERVER_PORT);
     }
 
     class ClientAccepter extends Thread {
         public void run() {
-            int serverPort = 8888;
             ServerSocket ss = null;
             try {
-                ss = new ServerSocket(serverPort);
+                ss = new ServerSocket(SERVER_PORT);
                 printInfo("Accepting clients");
                 while (running) {
                     Socket client = ss.accept();
@@ -104,6 +101,7 @@ public class TrisServer {
 
     class GameStarter extends Thread {
         public void run() {
+            /*
             //noinspection InfiniteLoopStatement
             while (true) {
                 try {
@@ -118,6 +116,8 @@ public class TrisServer {
                     throw new RuntimeException(e);
                 }
             } // while
+
+             */
         } // run
     }
 

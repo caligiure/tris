@@ -3,10 +3,12 @@ package tris.v2;
 import java.net.Socket;
 
 public class Player {
-    private int ID;
+    private final int ID;
     private final String username;
     private final Socket client;
-    private boolean waiting = true;
+    private boolean available = true;
+    private boolean waiting = false;
+    private Player opponent = null;
 
     public Player(int ID, String username, Socket sock) {
         this.ID = ID;
@@ -26,9 +28,17 @@ public class Player {
         return client;
     }
 
+    public boolean isAvailable() { return available; }
+
+    public void setAvailable(boolean available) { this.available = available; }
+
     public boolean isWaiting() { return waiting; }
 
     public void setWaiting(boolean waiting) { this.waiting = waiting; }
+
+    public Player getOpponent() { return opponent; }
+
+    public void setOpponent(Player opponent) { this.opponent = opponent; }
 
     @Override
     public boolean equals(Object o) {
@@ -39,7 +49,5 @@ public class Player {
     }
 
     @Override
-    public String toString() {
-        return username;
-    }
+    public String toString() { return ID+" - "+username; }
 }

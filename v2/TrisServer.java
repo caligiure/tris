@@ -5,7 +5,6 @@ import java.net.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrisServer {
@@ -13,8 +12,6 @@ public class TrisServer {
     boolean running = true;
     List<Player> players = Collections.synchronizedList(new LinkedList<Player>());
     AtomicInteger playersCounter = new AtomicInteger(0);
-
-    private final Semaphore mutexPlayers, readyPlayers;
 
     private synchronized void printInfo (String msg) {
         System.out.println(msg);
@@ -24,10 +21,6 @@ public class TrisServer {
     }
 
     public TrisServer() {
-
-        mutexPlayers = new Semaphore(1);
-        readyPlayers = new Semaphore(0);
-
         new ClientAccepter().start();
         new GameStarter().start();
         new MulticastManager().sendPort(SERVER_PORT);
@@ -44,13 +37,7 @@ public class TrisServer {
                     new ClientManager(client).start();
                 }
             } catch (IOException e) {
-                if (ss != null) {
-                    try {
-                        ss.close();
-                    } catch (IOException ex) {
-                        printError(ex.toString());
-                    }
-                }
+                if (ss != null) { try { ss.close(); } catch (IOException ex) { printError(ex.toString()); } }
                 printError(e.toString());
             }
         }
@@ -58,7 +45,6 @@ public class TrisServer {
 
     class ClientManager extends Thread {
         Socket client;
-
         public ClientManager(Socket client) {
             this.client = client;
         }
@@ -72,30 +58,55 @@ public class TrisServer {
                 int id = playersCounter.addAndGet(1);
                 Player p = new Player(id, username, client);
                 players.add(p);
-                out.writeObject(printAvailablePlayers());
+                printInfo("Accepted player "+p);
+                out.writeObject(printAvailablePlayers()+"\nType the number of a player to play against him or type R to reload the players list");
+                client.setSoTimeout(5000);
+                while (p.isAvailable()) {
+                    String s = (String) in.readObject();
+                    if (s.equalsIgnoreCase("R")) {
+                        out.writeObject(printAvailablePlayers());
+                    } else {
+                        int selectedID = -1;
+                        try { selectedID = Integer.parseInt(s); } catch (NumberFormatException e) {
+                            try { out.writeObject("Illegal input. Try again"); } catch (IOException ex) { printError(ex.toString()); } }
+                        if (selectedID != -1) {
+                            Player otherPlayer = findAvailablePlayer(selectedID);
+                            if(otherPlayer == null) { out.writeObject("The selected player is not available. Try again"); }
+                            else {
+                                sendChallenge(p, otherPlayer);
+                            }
+                        }
+                    }
+                }
+                in.close();
+                out.close();
+            } catch (IOException e) { printError("ClientManager stream error with client"+client.getInetAddress()+"\n"+e);
+            } catch (ClassNotFoundException e) { printError("ClientManager input stream error with client"+client.getInetAddress()+"\n"+e); }
+        }
 
-
-            } catch (IOException e) {
-                printError("ClientManager stream error: \n"+e);
-            } catch (ClassNotFoundException e) {
-                printError("ClientManager input stream error: \n" + e);
-            }
+        private void sendChallenge(Player p, Player otherPlayer) {
         }
 
         String printAvailablePlayers() {
             StringBuilder sb = new StringBuilder();
             int c = 0;
             for (Player p : players) {
-                if(p.isWaiting()){
+                if(p.isAvailable()){
                     c++;
-                    sb.append(p.getID()).append(". ").append(p.getUsername()).append("\n");
+                    sb.append(p).append("Is waiting for an opponent").append("\n");
                 }
             }
-            if(c == 0){
-                return "There are no available players. Wait for someone to challenge you";
+            if(c == 0){ return "There are no available players"; }
+            return "There are " + c + " available players\n" + sb;
+        }
+
+        Player findAvailablePlayer(int id) {
+            for (Player p : players){
+                if (p.getID()==id && p.isAvailable()) {
+                    return p;
+                }
             }
-            return "There are " + c + " available players:\n" + sb +
-                    "\nType the number of the player you want to challenge or wait for someone to challenge you";
+            return null;
         }
     }
 

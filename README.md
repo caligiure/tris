@@ -1,5 +1,5 @@
 # Tris
-This is a <b> Tik Tak Toe </b> network game.
+This is a <b> Tic Tac Toe </b> network game.
 ## How to play
 1. Start the TrisServer on a computer connected to your local network.
 2. Start the TrisClients on computers connected to the same network of the server.
